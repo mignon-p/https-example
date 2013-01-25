@@ -18,14 +18,6 @@ AC_CONFIG_MACRO_DIR([bld/m4])
 AC_PROG_CC
 
 
-# Shared lib versioning
-# CURRENT, REVISION, AGE
-# - library source changed -> increment REVISION
-# - interfaces added/removed/changed -> increment CURRENT, REVISION = 0
-# - interfaces added -> increment AGE
-# - interfaces removed -> AGE = 0
-# sets YOVO_LT_LDFLAGS
-AS_LIBTOOL(YOVO, 2, 0, 0)
 LT_INIT
 
 AM_CONDITIONAL([ENABLE_SHARED], [test "x$enable_shared" != xno])
@@ -34,6 +26,9 @@ AM_INIT_AUTOMAKE
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 m4_ifdef([AM_COLOR_TESTS], [AM_COLOR_TESTS([yes])])
+
+# Detect OpenSSL
+AX_CHECK_OPENSSL
 
 # check for libevent
 PKG_CHECK_MODULES([LIBEVENT], [libevent >= 2.1.2

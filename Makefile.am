@@ -7,15 +7,12 @@ AUTOMAKE_OPTIONS = \
   --warnings=error \
   --warnings=no-portability
 
-noinst_PROGRAMS = \
-  #
+ACLOCAL_AMFLAGS = -I bld/m4
 
-if HAVE_LIBEVENT
-noinst_PROGRAMS += \
+noinst_PROGRAMS = \
   https-client \
   https-server \
   #
-endif
 
 https_client_SOURCES = \
   https-client.c \
@@ -33,5 +30,5 @@ noinst_HEADERS = \
   openssl_hostname_validation.h \
   #
 
-AM_CFLAGS += $(LIBEVENT_CFLAGS)
-AM_LDFLAGS += $(LIBEVENT_LIBS)
+AM_CFLAGS = $(LIBEVENT_CFLAGS) $(OPENSSL_CFLAGS)
+AM_LDFLAGS = $(OPENSSL_LDFLAGS) $(LIBEVENT_LIBS) $(OPENSSL_LIBS)

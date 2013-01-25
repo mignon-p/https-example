@@ -3,10 +3,12 @@
 
 #include <signal.h>
 
-#include "common.h"
+#include "https-common.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+
+#include <event2/event.h>
 
 void die_most_horribly_from_openssl_error (const char *func)
 { fprintf (stderr, "%s failed:\n", func);
@@ -44,4 +46,8 @@ void common_setup (void)
   SSL_library_init ();
   SSL_load_error_strings ();
   OpenSSL_add_all_algorithms ();
+
+  printf ("Using OpenSSL version \"%s\"\nand libevent version \"%s\"\n",
+          SSLeay_version (SSLEAY_VERSION),
+          event_get_version ());
 }

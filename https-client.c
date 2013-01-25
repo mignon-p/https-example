@@ -13,7 +13,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "common.h"
+#include "https-common.h"
 #include "openssl_hostname_validation.h"
 
 #include <stdbool.h>
@@ -96,6 +96,15 @@ static void launch_request (struct session *s)
   conn = evhttp_connection_base_bufferevent_new (
                                 base, 0, bev, s->host, s->port);
   evhttp_connection_set_timeout (conn, 60);
+
+#if 0
+  /* Retries defaults to 0, which seems bad, since some of the evhttp
+   * code seems to assume that a retry will happen:
+   * http://archives.seul.org/libevent/users/Jan-2013/msg00051.html
+   * So, let's set retries to 1, in order to get past that case. */
+  evhttp_connection_set_retries (conn, 1);
+#endif
+
   s->c = conn;
   s->bev = bev;
 
@@ -188,7 +197,7 @@ static char *client_do_post (const char *host, int port, const char *passcode)
 
   /* Find the certificate authority (which we will use to
    * validate the server) and add it to the context. */
-  SSL_CTX_load_verify_locations (sctx, "certs/certificate-authorities.pem", NULL);
+  SSL_CTX_load_verify_locations (sctx, "certificate-authorities.pem", NULL);
 
   SSL_CTX_set_verify (sctx, SSL_VERIFY_PEER, NULL);
   SSL_CTX_set_cert_verify_callback (sctx, cert_verify_callback, (void *) host);
@@ -202,6 +211,7 @@ static char *client_do_post (const char *host, int port, const char *passcode)
   s1.data_size = strlen (buf);
   free (urlencoded_passcode);
 
+#if 1
   /* Sadly, "host" must currently be an address which resolves to an IPv4
    * address.  (e. g. on my machine, "localhost" resolves to "::1" in
    * addition to "127.0.0.1", and it picks the IPv6 first.)
@@ -209,6 +219,7 @@ static char *client_do_post (const char *host, int port, const char *passcode)
    */
   if (0 == strcmp (host, "localhost"))
     host = "127.0.0.1"; /* horribly ugly hack to avoid ::1 for localhost */
+#endif
 
   s1.kind = EVHTTP_REQ_POST;
   s1.host = host;
@@ -235,7 +246,7 @@ int main (int argc, char **argv)
 
   /* Send the passcode to the https server in a POST request. */
   char *result = client_do_post (host, COMMON_HTTPS_PORT, COMMON_PASSCODE);
-  printf ("server said \"%s\"\n", result);
+  printf ("server said: %s\n", result);
   free (result);
 
   return EXIT_SUCCESS;

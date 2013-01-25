@@ -14,7 +14,7 @@
 
  */
 
-#include "common.h"
+#include "https-common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,7 +124,7 @@ send_document_cb (struct evhttp_request *req, void *arg)
   const char *passcode = evhttp_find_header (&kv, "passcode");
   char response[256];
   evutil_snprintf (response, sizeof (response),
-                   "Hi %s!  I %s your passcode.", peer_addr,
+                   "Hi %s!  I %s your passcode.\n", peer_addr,
                    (0 == strcmp (passcode, COMMON_PASSCODE)
                     ?  "liked"
                     :  "didn't like"));
@@ -219,8 +219,8 @@ static int serve_some_http (void)
     die_most_horribly_from_openssl_error ("SSL_CTX_set_tmp_ecdh");
 
   /* Find and set up our server certificate. */
-  const char *certificate_chain = "certs/server-certificate-chain.pem";
-  const char *private_key = "certs/server-private-key.pem";
+  const char *certificate_chain = "server-certificate-chain.pem";
+  const char *private_key = "server-private-key.pem";
   server_setup_certs (ctx, certificate_chain, private_key);
 
   /* This is the magic that lets evhttp use SSL. */

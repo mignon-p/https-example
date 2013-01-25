@@ -12,7 +12,7 @@
 /**
  * This is the string the client tells the server in the POST request.
  */
-#define COMMON_PASSCODE "foo!  bar!  baz!"
+#define COMMON_PASSCODE "R23"
 
 /**
  * If an OpenSSL function returns a return value indicating failure
