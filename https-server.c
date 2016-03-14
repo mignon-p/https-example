@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -66,6 +67,8 @@
 #define O_RDONLY _O_RDONLY
 #endif
 
+unsigned short serverPort = COMMON_HTTPS_PORT;
+
 /* Instead of casting between these types, create a union with all of them,
  * to avoid -Wstrict-aliasing warnings. */
 typedef union
@@ -85,6 +88,15 @@ send_document_cb (struct evhttp_request *req, void *arg)
 { struct evbuffer *evb = NULL;
   const char *uri = evhttp_request_get_uri (req);
   struct evhttp_uri *decoded = NULL;
+
+  if (evhttp_request_get_command (req) == EVHTTP_REQ_GET)
+    {
+      struct evbuffer *buf = evbuffer_new();
+      if (buf == NULL) return;
+      evbuffer_add_printf(buf, "Requested: %s\n", uri);
+      evhttp_send_reply(req, HTTP_OK, "OK", buf);
+      return;
+    }
 
   /* We only handle POST requests. */
   if (evhttp_request_get_command (req) != EVHTTP_REQ_POST)
@@ -184,7 +196,6 @@ static int serve_some_http (void)
   struct evhttp *http;
   struct evhttp_bound_socket *handle;
 
-  unsigned short port = COMMON_HTTPS_PORT;
 #ifdef _WIN32
   WSADATA WSAData;
   WSAStartup (0x101, &WSAData);
@@ -230,9 +241,10 @@ static int serve_some_http (void)
   evhttp_set_gencb (http, send_document_cb, NULL);
 
   /* Now we tell the evhttp what port to listen on */
-  handle = evhttp_bind_socket_with_handle (http, "0.0.0.0", port);
+  handle = evhttp_bind_socket_with_handle (http, "0.0.0.0", serverPort);
   if (! handle)
-    { fprintf (stderr, "couldn't bind to port %d. Exiting.\n", (int) port);
+    { fprintf (stderr, "couldn't bind to port %d. Exiting.\n",
+               (int) serverPort);
       return 1;
     }
 
@@ -281,6 +293,25 @@ static int serve_some_http (void)
 
 int main (int argc, char **argv)
 { common_setup ();              /* Initialize OpenSSL */
+
+  if (argc > 1) {
+    char *end_ptr;
+    long lp = strtol(argv[1], &end_ptr, 0);
+    if (*end_ptr) {
+      fprintf(stderr, "Invalid integer\n");
+      return -1;
+    }
+    if (lp <= 0) {
+      fprintf(stderr, "Port must be positive\n");
+      return -1;
+    }
+    if (lp >= USHRT_MAX) {
+      fprintf(stderr, "Port must fit 16-bit range\n");
+      return -1;
+    }
+
+    serverPort = (unsigned short)lp;
+  }
 
   /* now run http server (never returns) */
   return serve_some_http ();
